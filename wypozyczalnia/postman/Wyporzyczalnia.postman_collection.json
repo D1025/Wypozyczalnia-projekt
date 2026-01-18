@@ -91,6 +91,76 @@
   ],
   "item": [
     {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (backend)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('has access token', function () { pm.expect(json).to.have.property('accessToken'); });",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.expiresIn) {",
+                  "  const bufferMs = 5000;",
+                  "  const expiry = Date.now() + Math.max(json.expiresIn * 1000 - bufferMs, 0);",
+                  "  pm.collectionVariables.set('tokenExpiresAt', String(expiry));",
+                  "} else { pm.collectionVariables.set('tokenExpiresAt', '0'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (bad credentials)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"wrong\",\n  \"password\": \"wrong\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 401', function () { pm.response.to.have.status(401); });" ] } } ]
+        },
+        {
+          "name": "Refresh token (backend)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth","refresh"] }
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 200', function () { pm.response.to.have.status(200); });", "const json = pm.response.json();", "pm.test('has access token', function () { pm.expect(json).to.have.property('accessToken'); });", "pm.collectionVariables.set('accessToken', json.accessToken);", "pm.collectionVariables.set('refreshToken', json.refreshToken);" ] } } ]
+        },
+        {
+          "name": "Logout (backend)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth","logout"] }
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 204 or 200', function() { pm.expect([204,200]).to.include(pm.response.code); });", "pm.collectionVariables.unset('accessToken');", "pm.collectionVariables.unset('refreshToken');" ] } } ]
+        }
+      ]
+    },
+    {
       "name": "Books",
       "item": [
         {

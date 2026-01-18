@@ -58,7 +58,11 @@ services:
       DB_NAME: ${DB_NAME:-wypozyczalnia}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
       KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
     depends_on:
       - postgres
       - postgres-keycloak

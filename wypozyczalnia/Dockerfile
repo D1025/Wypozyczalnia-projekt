@@ -1,4 +1,4 @@
-FROM openjdk:24-jdk-slim AS build
+FROM eclipse-temurin:24-jdk AS build
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew build --no-daemon
 
 # Runtime stage
-FROM openjdk:24-jdk-slim
+FROM eclipse-temurin:24-jre
 
 WORKDIR /app
 
