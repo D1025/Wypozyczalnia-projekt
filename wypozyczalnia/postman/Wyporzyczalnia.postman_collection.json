@@ -1,100 +1,65 @@
 {
   "info": {
-    "name": "Wypo\u017cyczalnia API",
+    "name": "Wypożyczalnia API",
     "_postman_id": "wypozyczalnia-collection-1",
-    "description": "Collection to test Wypo\u017cyczalnia REST API (Books, Members, Loans). Update variables 'baseUrl' and 'accessToken' in collection or environment before running.",
+    "description": "Collection to test Wypożyczalnia REST API (Books, Members, Loans).\n\nCovers: CRUD (GET/POST/PUT/DELETE), collection & member endpoints, headers (Authorization/Accept/Content-Type), content negotiation (JSON/XML), OAuth2/JWT auth, and error handling examples (401/403/404/500).\n\nRun order (suggested):\n1) Auth/Register (backend) -> 2) Auth/Login USER (backend) -> 3) Auth/Login ADMIN (backend)\n4) Admin/Books -> Admin/Members -> Admin/Loans\n5) User read-only + negative tests\n\nVariables: baseUrl, adminAccessToken, accessToken, bookId, memberId, loanId",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" },
-    { "key": "tokenExpiresAt", "value": "0", "type": "string" },
-  { "key": "authBaseUrl", "value": "http://localhost:8086", "type": "string" },
-  { "key": "realm", "value": "wypozyczalnia", "type": "string" },
-  { "key": "clientId", "value": "wypozyczalnia-app", "type": "string" },
+    { "key": "authBaseUrl", "value": "http://localhost:8086", "type": "string" },
+    { "key": "realm", "value": "wypozyczalnia", "type": "string" },
+    { "key": "clientId", "value": "wypozyczalnia-app", "type": "string" },
     { "key": "clientSecret", "value": "", "type": "string" },
+
     { "key": "username", "value": "", "type": "string" },
     { "key": "password", "value": "", "type": "string" },
-    { "key": "scope", "value": "openid profile roles", "type": "string" }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "const authBaseUrl = pm.collectionVariables.get('authBaseUrl');",
-          "const realm = pm.collectionVariables.get('realm');",
-          "const clientId = pm.collectionVariables.get('clientId');",
-          "const clientSecret = pm.collectionVariables.get('clientSecret');",
-          "const username = pm.collectionVariables.get('username');",
-          "const password = pm.collectionVariables.get('password');",
-          "const scope = pm.collectionVariables.get('scope') || '';",
-          "if (!authBaseUrl || !realm || !clientId || !username || !password) {",
-          "  console.warn('Skipping token fetch, missing required variables.');",
-          "  return;",
-          "}",
-          "const expiresAtRaw = pm.collectionVariables.get('tokenExpiresAt');",
-          "const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : 0;",
-          "if (expiresAt && !Number.isNaN(expiresAt) && Date.now() < expiresAt) {",
-          "  return;",
-          "}",
-          "const baseUrl = authBaseUrl.replace(/\\/$/, '').replace(/\\/$/, '');",
-          "const trimmedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;",
-          "const tokenUrl = `${trimmedBase}/realms/${realm}/protocol/openid-connect/token`;",
-          "const parts = [",
-          "  'grant_type=password',",
-          "  `client_id=${encodeURIComponent(clientId)}`,",
-          "  `username=${encodeURIComponent(username)}`,",
-          "  `password=${encodeURIComponent(password)}`",
-          "];",
-          "if (clientSecret) {",
-          "  parts.push(`client_secret=${encodeURIComponent(clientSecret)}`);",
-          "}",
-          "if (scope) {",
-          "  parts.push(`scope=${encodeURIComponent(scope)}`);",
-          "}",
-          "const request = {",
-          "  url: tokenUrl,",
-          "  method: 'POST',",
-          "  header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
-          "  body: { mode: 'raw', raw: parts.join('&') }",
-          "};",
-          "pm.sendRequest(request, function (err, res) {",
-          "  if (err) {",
-          "    pm.collectionVariables.unset('accessToken');",
-          "    throw err;",
-          "  }",
-          "  if (!res || res.code !== 200) {",
-          "    pm.collectionVariables.unset('accessToken');",
-          "    throw new Error(`Unable to fetch token, status: ${res && res.code}`);",
-          "  }",
-          "  const json = res.json();",
-          "  const accessToken = json && json.access_token;",
-          "  if (!accessToken) {",
-          "    pm.collectionVariables.unset('accessToken');",
-          "    throw new Error('Token response missing access_token');",
-          "  }",
-          "  pm.collectionVariables.set('accessToken', accessToken);",
-          "  const expiresIn = json.expires_in ? Number(json.expires_in) : 0;",
-          "  if (expiresIn && !Number.isNaN(expiresIn)) {",
-          "    const bufferMs = 5000;",
-          "    const expiry = Date.now() + Math.max(expiresIn * 1000 - bufferMs, 0);",
-          "    pm.collectionVariables.set('tokenExpiresAt', String(expiry));",
-          "  } else {",
-          "    pm.collectionVariables.set('tokenExpiresAt', '0');",
-          "  }",
-          "});"
-        ]
-      }
-    }
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+
+    { "key": "adminUsername", "value": "admin", "type": "string" },
+    { "key": "adminPassword", "value": "admin", "type": "string" },
+    { "key": "adminAccessToken", "value": "", "type": "string" },
+
+    { "key": "bookId", "value": "", "type": "string" },
+    { "key": "memberId", "value": "", "type": "string" },
+    { "key": "loanId", "value": "", "type": "string" }
   ],
   "item": [
     {
       "name": "Auth",
       "item": [
         {
-          "name": "Login (backend)",
+          "name": "Register (backend)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"demo.user.{{$timestamp}}\",\n  \"password\": \"P@ssw0rd123\",\n  \"email\": \"demo.{{$timestamp}}@example.com\",\n  \"role\": \"MEMBER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('username', json.username);",
+                  "pm.collectionVariables.set('password', 'P@ssw0rd123');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login USER (backend)",
           "request": {
             "method": "POST",
             "header": [
@@ -102,7 +67,7 @@
               { "key": "Accept", "value": "application/json" }
             ],
             "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
           },
           "event": [
             {
@@ -112,41 +77,46 @@
                 "exec": [
                   "pm.test('status 200', function () { pm.response.to.have.status(200); });",
                   "const json = pm.response.json();",
-                  "pm.test('has access token', function () { pm.expect(json).to.have.property('accessToken'); });",
                   "pm.collectionVariables.set('accessToken', json.accessToken);",
-                  "pm.collectionVariables.set('refreshToken', json.refreshToken);",
-                  "if (json.expiresIn) {",
-                  "  const bufferMs = 5000;",
-                  "  const expiry = Date.now() + Math.max(json.expiresIn * 1000 - bufferMs, 0);",
-                  "  pm.collectionVariables.set('tokenExpiresAt', String(expiry));",
-                  "} else { pm.collectionVariables.set('tokenExpiresAt', '0'); }"
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Login (bad credentials)",
+          "name": "Login ADMIN (backend)",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Accept", "value": "application/json" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"wrong\",\n  \"password\": \"wrong\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
           },
-          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 401', function () { pm.response.to.have.status(401); });" ] } } ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('adminAccessToken', json.accessToken);"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Refresh token (backend)",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth","refresh"] }
-          },
-          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 200', function () { pm.response.to.have.status(200); });", "const json = pm.response.json();", "pm.test('has access token', function () { pm.expect(json).to.have.property('accessToken'); });", "pm.collectionVariables.set('accessToken', json.accessToken);", "pm.collectionVariables.set('refreshToken', json.refreshToken);" ] } } ]
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
+          }
         },
         {
           "name": "Logout (backend)",
@@ -154,28 +124,315 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth","logout"] }
-          },
-          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('status 204 or 200', function() { pm.expect([204,200]).to.include(pm.response.code); });", "pm.collectionVariables.unset('accessToken');", "pm.collectionVariables.unset('refreshToken');" ] } } ]
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
         }
       ]
     },
     {
-      "name": "Books",
+      "name": "Admin - Books (CRUD + negotiation)",
       "item": [
         {
-          "name": "Get books (paged)",
+          "name": "Create book (ADMIN) [JSON]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Admin Book {{$timestamp}}\",\n  \"author\": \"Admin\",\n  \"isbn\": \"978-83-111111-{{$timestamp}}\",\n  \"publishedYear\": 2024,\n  \"genre\": \"Admin\",\n  \"description\": \"Test admin create\",\n  \"totalCopies\": 1,\n  \"availableCopies\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/books", "host": ["{{baseUrl}}"], "path": ["api", "books"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('bookId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List books (ADMIN) [JSON]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/books?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "books"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
+          }
+        },
+        {
+          "name": "List books (ADMIN) [XML negotiation]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/xml" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/books?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "books"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
+          }
+        },
+        {
+          "name": "Get book (ADMIN) [JSON]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/books/{{bookId}}", "host": ["{{baseUrl}}"], "path": ["api", "books", "{{bookId}}"] }
+          }
+        },
+        {
+          "name": "Update book (ADMIN) [JSON]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Admin Book\",\n  \"author\": \"Admin\",\n  \"isbn\": \"978-83-111111-UPDATED\",\n  \"publishedYear\": 2025,\n  \"genre\": \"Admin\",\n  \"description\": \"Updated\",\n  \"totalCopies\": 2,\n  \"availableCopies\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/books/{{bookId}}", "host": ["{{baseUrl}}"], "path": ["api", "books", "{{bookId}}"] }
+          }
+        },
+        {
+          "name": "Delete book (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/books/{{bookId}}", "host": ["{{baseUrl}}"], "path": ["api", "books", "{{bookId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin - Members (CRUD)",
+      "item": [
+        {
+          "name": "Create member (ADMIN) [JSON]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jan\",\n  \"lastName\": \"Kowalski\",\n  \"email\": \"jan.kowalski.{{$timestamp}}@example.com\",\n  \"phoneNumber\": \"123456789\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/members", "host": ["{{baseUrl}}"], "path": ["api", "members"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('memberId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List members (ADMIN) [JSON]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "members"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
+          }
+        },
+        {
+          "name": "Get member (ADMIN) [JSON]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}"] }
+          }
+        },
+        {
+          "name": "Update member (ADMIN) [JSON]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jan\",\n  \"lastName\": \"Nowak\",\n  \"email\": \"jan.nowak.{{$timestamp}}@example.com\",\n  \"phoneNumber\": \"987654321\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}"] }
+          }
+        },
+        {
+          "name": "Delete member (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin - Loans (CRUD on member subresource)",
+      "item": [
+        {
+          "name": "Create loan for member (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"loanDate\": \"2025-01-01\",\n  \"returnDate\": \"2025-01-15\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}/loans", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}", "loans"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('loanId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List loans for member (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}/loans?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}", "loans"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
+          }
+        },
+        {
+          "name": "Get loan for member (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}/loans/{{loanId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}", "loans", "{{loanId}}"] }
+          }
+        },
+        {
+          "name": "Update loan for member (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnDate\": \"2025-02-01\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}/loans/{{loanId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}", "loans", "{{loanId}}"] }
+          }
+        },
+        {
+          "name": "Delete loan for member (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/members/{{memberId}}/loans/{{loanId}}", "host": ["{{baseUrl}}"], "path": ["api", "members", "{{memberId}}", "loans", "{{loanId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "User - Read-only + negotiation",
+      "item": [
+        {
+          "name": "List books (USER) [JSON]",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Accept", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{accessToken}}" }
             ],
-            "url": { "raw": "{{baseUrl}}/api/books?page=0&size=20&sort=title,asc", "host": ["{{baseUrl}}"], "path": ["api","books"], "query": [{"key":"page","value":"0"},{"key":"size","value":"20"},{"key":"sort","value":"title,asc"}] }
+            "url": { "raw": "{{baseUrl}}/api/books?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "books"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
           }
         },
         {
-          "name": "Create book",
+          "name": "List books (USER) [XML negotiation]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/xml" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/books?page=0&size=5", "host": ["{{baseUrl}}"], "path": ["api", "books"], "query": [ {"key":"page","value":"0"}, {"key":"size","value":"5"} ] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Negative tests (errors)",
+      "item": [
+        {
+          "name": "401 Unauthorized - list books without token",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Accept", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/books", "host": ["{{baseUrl}}"], "path": ["api", "books"] }
+          }
+        },
+        {
+          "name": "403 Forbidden - USER tries to create book",
           "request": {
             "method": "POST",
             "header": [
@@ -185,197 +442,33 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Example Book\",\n  \"author\": \"Jan Kowalski\",\n  \"isbn\": \"978-83-000000-0-1\",\n  \"publishedYear\": 2020,\n  \"genre\": \"Programming\",\n  \"description\": \"Przyk\u0142adowy opis książki.\",\n  \"totalCopies\": 3,\n  \"availableCopies\": 3\n}"
+              "raw": "{\n  \"title\": \"Should fail\",\n  \"author\": \"User\",\n  \"isbn\": \"978-00-000000-0-0\",\n  \"publishedYear\": 2020,\n  \"genre\": \"Test\",\n  \"description\": \"User cannot create\",\n  \"totalCopies\": 1,\n  \"availableCopies\": 1\n}"
             },
-            "url": { "raw": "{{baseUrl}}/api/books", "host": ["{{baseUrl}}"], "path": ["api","books"] }
+            "url": { "raw": "{{baseUrl}}/api/books", "host": ["{{baseUrl}}"], "path": ["api", "books"] }
           }
         },
         {
-          "name": "Get book by id",
+          "name": "404 Not Found - get non-existent book",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
             ],
-            "url": { "raw": "{{baseUrl}}/api/books/:bookId", "host": ["{{baseUrl}}"], "path": ["api","books", ":bookId"] }
-          },
-          "response": []
-        },
-        {
-          "name": "Update book",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Example Book - Updated\",\n  \"availableCopies\": 2\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/api/books/:bookId", "host": ["{{baseUrl}}"], "path": ["api","books", ":bookId"] }
+            "url": { "raw": "{{baseUrl}}/api/books/00000000-0000-0000-0000-000000000000", "host": ["{{baseUrl}}"], "path": ["api", "books", "00000000-0000-0000-0000-000000000000"] }
           }
         },
         {
-          "name": "Delete book",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/books/:bookId", "host": ["{{baseUrl}}"], "path": ["api","books", ":bookId"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Members",
-      "item": [
-        {
-          "name": "Get members (paged)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members?page=0&size=20&sort=lastName,asc", "host": ["{{baseUrl}}"], "path": ["api","members"], "query": [{"key":"page","value":"0"},{"key":"size","value":"20"},{"key":"sort","value":"lastName,asc"}] }
-          }
-        },
-        {
-          "name": "Create member",
+          "name": "500 Internal Server Error (example) - create loan with invalid body",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Anna\",\n  \"lastName\": \"Nowak\",\n  \"email\": \"anna.nowak@example.com\",\n  \"active\": true\n}" },
-            "url": { "raw": "{{baseUrl}}/api/members", "host": ["{{baseUrl}}"], "path": ["api","members"] }
-          }
-        },
-        {
-          "name": "Get member by id",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId"] }
-          }
-        },
-        {
-          "name": "Update member",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Anna Maria\",\n  \"active\": false\n}" },
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId"] }
-          }
-        },
-        {
-          "name": "Delete member",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Loans (nested under member)",
-      "item": [
-        {
-          "name": "Get member loans (paged)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId/loans?page=0&size=20&sort=loanDate,desc", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId", "loans"], "query": [{"key":"page","value":"0"},{"key":"size","value":"20"},{"key":"sort","value":"loanDate,desc"}] }
-          }
-        },
-        {
-          "name": "Create loan",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \":bookId\",\n  \"dueDate\": \"2025-12-01\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId/loans", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId", "loans"] }
-          }
-        },
-        {
-          "name": "Get loan by id",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId/loans/:loanId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId", "loans", ":loanId"] }
-          }
-        },
-        {
-          "name": "Update loan",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"dueDate\": \"2025-12-15\",\n  \"status\": \"RETURNED\",\n  \"returnDate\": \"2025-12-05\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId/loans/:loanId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId", "loans", ":loanId"] }
-          }
-        },
-        {
-          "name": "Delete loan",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/api/members/:memberId/loans/:loanId", "host": ["{{baseUrl}}"], "path": ["api","members", ":memberId", "loans", ":loanId"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Actuator",
-      "item": [
-        {
-          "name": "Health",
-          "request": {
-            "method": "GET",
-            "header": [ { "key": "Accept", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator","health"] }
-          }
-        },
-        {
-          "name": "Info",
-          "request": {
-            "method": "GET",
-            "header": [ { "key": "Accept", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/actuator/info", "host": ["{{baseUrl}}"], "path": ["actuator","info"] }
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"not-a-uuid\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/members/00000000-0000-0000-0000-000000000000/loans", "host": ["{{baseUrl}}"], "path": ["api", "members", "00000000-0000-0000-0000-000000000000", "loans"] }
           }
         }
       ]

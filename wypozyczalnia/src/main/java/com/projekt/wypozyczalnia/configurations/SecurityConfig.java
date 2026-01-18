@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,19 +37,32 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-        .csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/actuator/health", "/actuator/info", "/auth/**").permitAll()
-            .anyRequest().authenticated())
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint((request, response, authException) ->
-                writeErrorResponse(response, HttpStatus.UNAUTHORIZED, "Brak autoryzacji", request.getRequestURI()))
-            .accessDeniedHandler((request, response, accessDeniedException) ->
-                writeErrorResponse(response, HttpStatus.FORBIDDEN, "Brak uprawnień do zasobu", request.getRequestURI())))
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-        .build();
+        return http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authorize -> authorize
+                // public endpoints
+                .requestMatchers("/actuator/health", "/actuator/info", "/auth/**").permitAll()
+
+                // BOOKS
+                // everyone logged in can list/view books
+                .requestMatchers(HttpMethod.GET, "/api/books/**").hasAnyRole("MEMBER", "ASSISTANT", "LIBRARIAN")
+                // only staff can modify books
+                .requestMatchers(HttpMethod.POST, "/api/books/**").hasAnyRole("ASSISTANT", "LIBRARIAN")
+                .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("ASSISTANT", "LIBRARIAN")
+                .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("LIBRARIAN")
+
+                // MEMBERS (admin/staff)
+                .requestMatchers("/api/members/**").hasRole("LIBRARIAN")
+
+                .anyRequest().authenticated())
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) ->
+                    writeErrorResponse(response, HttpStatus.UNAUTHORIZED, "Brak autoryzacji", request.getRequestURI()))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    writeErrorResponse(response, HttpStatus.FORBIDDEN, "Brak uprawnień do zasobu", request.getRequestURI())))
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+            .build();
     }
 
     @Bean

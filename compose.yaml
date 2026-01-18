@@ -47,6 +47,30 @@ services:
     networks:
       - wypozyczalnia-network
 
+  keycloak-init:
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:22.0}
+    container_name: ${KEYCLOAK_INIT_CONTAINER_NAME:-wypozyczalnia-keycloak-init}
+    depends_on:
+      - keycloak
+    environment:
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-wypozyczalnia}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_APP_CLIENT_ID: ${KEYCLOAK_RESOURCE:-wypozyczalnia-app}
+      APP_ADMIN_USERNAME: ${APP_ADMIN_USERNAME:-admin}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-admin}
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@example.com}
+      APP_ADMIN_ROLE: ${APP_ADMIN_ROLE:-LIBRARIAN}
+    entrypoint: ["/bin/sh", "-c"]
+    command: "/opt/keycloak/init/init-admin.sh"
+    volumes:
+      - ./wypozyczalnia/keycloak-realm:/opt/keycloak/data/import
+      - ./wypozyczalnia/keycloak-realm/init-admin.sh:/opt/keycloak/init/init-admin.sh:ro
+    restart: "no"
+    networks:
+      - wypozyczalnia-network
+
   backend:
     build: ${BACKEND_BUILD_PATH:-./wypozyczalnia}
     container_name: ${BACKEND_CONTAINER_NAME:-wypozyczalnia-backend}
@@ -63,6 +87,8 @@ services:
       KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
       KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
     depends_on:
       - postgres
       - postgres-keycloak
