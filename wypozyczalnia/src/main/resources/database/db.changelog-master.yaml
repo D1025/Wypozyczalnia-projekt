@@ -6,3 +6,11 @@ databaseChangeLog:
         - sqlFile:
             path: changelog/001-create-tables.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 002-seed-mock-data
+      author: github-copilot
+      changes:
+        - sqlFile:
+            path: changelog/002-seed-mock-data.sql
+            relativeToChangelogFile: true

@@ -35,4 +35,7 @@ public class BookUpdateRequestDto {
 
     @Min(0)
     private Integer availableCopies;
+
+    @Size(max = 1024)
+    private String imageUrl;
 }

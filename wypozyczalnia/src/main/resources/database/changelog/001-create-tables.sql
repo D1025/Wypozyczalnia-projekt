@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS books (
     genre VARCHAR(255),
     description TEXT,
     total_copies INTEGER NOT NULL,
-    available_copies INTEGER NOT NULL
+    available_copies INTEGER NOT NULL,
+    image_url VARCHAR(1024)
 );
 
 CREATE TABLE IF NOT EXISTS members (

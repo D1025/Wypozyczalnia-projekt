@@ -60,6 +60,13 @@ public class Book {
     @Column(name = "available_copies", nullable = false)
     private Integer availableCopies;
 
+    /**
+     * Optional URL to book cover image.
+     * In DB seed scripts this is intentionally left empty ("") so links can be filled manually.
+     */
+    @Column(name = "image_url", length = 1024)
+    private String imageUrl;
+
     @Builder.Default
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Loan> loans = new ArrayList<>();

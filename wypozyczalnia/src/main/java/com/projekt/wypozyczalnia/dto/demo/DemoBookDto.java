@@ -1,4 +1,4 @@
-package com.projekt.wypozyczalnia.dto.book;
+package com.projekt.wypozyczalnia.dto.demo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
@@ -10,9 +10,9 @@ import java.util.UUID;
 @Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JacksonXmlRootElement(localName = "Book")
-public class BookResponseDto {
-
+@JacksonXmlRootElement(localName = "DemoBook")
+public class DemoBookDto {
+    // 10 pól prostych (zgodnie z bazą danych)
     UUID id;
     String title;
     String author;
@@ -22,6 +22,9 @@ public class BookResponseDto {
     String description;
     Integer totalCopies;
     Integer availableCopies;
-
     String imageUrl;
+
+    // Dane zagnieżdżone (poziom 1 i 2)
+    BookSpecsDto specs;
 }
+
