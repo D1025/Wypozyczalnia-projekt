@@ -156,10 +156,8 @@ Ograniczenia:
 **Przedmiot:** _[Programowanie we frameworkach internetowych]_  
 **Rok akademicki:** _[2025/2026]_  
 
-**Autorzy:**
+**Autor:**
 - _[Patryk Treszczotko]_ — nr indeksu: _[84794]_   
-
-> Uwaga: nie znalazłem w repo pliku z nazwą przedmiotu/rokiem/autorami, więc zostawiłem pola do uzupełnienia.
 
 ---
 
