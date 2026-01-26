@@ -42,7 +42,7 @@ export interface DemoData {
 type CacheShape = {
   savedAt: string;
   data: DemoData;
-  imageMap?: Record<string, string>; // remoteUrl -> localFileUri
+  imageMap?: Record<string, string>;
 };
 
 async function readCache(): Promise<CacheShape | null> {
@@ -63,12 +63,10 @@ async function downloadImagesForOffline(data: DemoData): Promise<Record<string, 
   const urls = Array.from(collectImageUrls(data));
   const map: Record<string, string> = {};
 
-  // Sequential is simpler and avoids many parallel downloads on mobile.
   for (const url of urls) {
     try {
       map[url] = await getOrDownloadImage(url);
     } catch {
-      // ignore single image failures
     }
   }
 
@@ -112,7 +110,6 @@ export function useDemoData() {
 
     const json = (await res.json()) as DemoData;
 
-    // Download public images for offline usage
     const imageMap = await downloadImagesForOffline(json);
     const hydrated = replaceImageUrlsWithLocal(json, imageMap);
 
@@ -131,10 +128,8 @@ export function useDemoData() {
     setError(null);
 
     try {
-      // Always try cache first for instant offline availability
       await loadFromCache();
 
-      // If online, refresh from API
       const state = await NetInfo.fetch();
       const onlineNow = Boolean(state.isConnected && state.isInternetReachable !== false);
       if (onlineNow) {
@@ -170,8 +165,6 @@ export function useDemoData() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // Removed sections logic as we only display books now
 
   return {
     data,

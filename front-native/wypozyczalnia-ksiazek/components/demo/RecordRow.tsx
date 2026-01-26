@@ -63,7 +63,7 @@ export function RecordRow({ title, value }: { title: string; value: any }) {
   const toggleOpen = () => {
     setIsOpen(v => !v);
     if (isOpen) {
-      setShowFullJson(false); // Reset show more on close
+      setShowFullJson(false);
       setExpandedMore(false);
     }
   };
@@ -91,7 +91,6 @@ export function RecordRow({ title, value }: { title: string; value: any }) {
           </View>
         </Pressable>
 
-        {/* inline expanded content (small preview) - doesn't affect layout much */}
         {isOpen && (
           <View style={styles.content}>
                <View style={styles.previewContainer}>
@@ -132,14 +131,12 @@ export function RecordRow({ title, value }: { title: string; value: any }) {
         )}
       </ThemedView>
 
-      {/* Absolute overlay that covers full width of parent container - doesn't push siblings */}
       {isOpen && (
         <Animated.View
           pointerEvents="box-none"
           style={[
             styles.overlay,
             {
-              // slide from top of card slightly
               transform: [
                 {
                   translateY: overlayAnim.interpolate({
@@ -149,7 +146,7 @@ export function RecordRow({ title, value }: { title: string; value: any }) {
                 },
               ],
               opacity: overlayAnim,
-              width: screenWidth - 32, // account for container padding
+              width: screenWidth - 32,
             },
           ]}
         >
@@ -192,7 +189,6 @@ export function RecordRow({ title, value }: { title: string; value: any }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    // ensure overlay can position absolutely relative to this wrapper
     position: 'relative',
     marginBottom: 12,
   },
@@ -281,13 +277,11 @@ const styles = StyleSheet.create({
     color: '#0a7ea4',
     fontWeight: '600',
   },
-  // overlay styles
   overlay: {
     position: 'absolute',
     left: 16,
     top: 8,
     zIndex: 1000,
-    // width is set inline to account for screen size
   },
   overlayCard: {
     borderRadius: 12,

@@ -1,9 +1,6 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
-// Na web/SSR nie ma sensownego, trwałego "FileSystem" jak na natywnych platformach.
-// Dodatkowo niektóre implementacje (szczególnie w bundlerze web) potrafią wywalić się
-// na walidacji ścieżek. Dlatego cache do plików ograniczamy do iOS/Android.
 const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const nativeCacheBase = isNative
@@ -15,7 +12,6 @@ const nativeCacheBase = isNative
 const DIR = isNative && nativeCacheBase ? `${nativeCacheBase}demo-images/` : '';
 
 function safeFileNameFromUrl(url: string): string {
-  // Keep it deterministic and filesystem-safe
   const base = encodeURIComponent(url);
   return `${base}.img`;
 }
@@ -28,16 +24,11 @@ async function ensureDir() {
   }
 }
 
-/**
- * Download an image URL to a local file (cacheDirectory) and return local file uri.
- * If already downloaded, return existing local uri.
- */
 export async function getOrDownloadImage(url: string): Promise<string> {
   if (!url || !url.startsWith('http')) {
     return url;
   }
 
-  // WEB/SSR: nie ściągamy do plików – używamy bezpośrednio URL.
   if (!isNative) {
     return url;
   }
@@ -54,9 +45,6 @@ export async function getOrDownloadImage(url: string): Promise<string> {
   return result.uri;
 }
 
-/**
- * Walk any JSON-ish structure and collect imageUrl strings.
- */
 export function collectImageUrls(value: any, acc: Set<string> = new Set()): Set<string> {
   if (value === null || value === undefined) return acc;
 
@@ -79,9 +67,6 @@ export function collectImageUrls(value: any, acc: Set<string> = new Set()): Set<
   return acc;
 }
 
-/**
- * Replace remote imageUrl values with local file URIs using provided mapping.
- */
 export function replaceImageUrlsWithLocal(value: any, map: Record<string, string>): any {
   if (value === null || value === undefined) return value;
 

@@ -174,18 +174,27 @@ export default function HomeScreen() {
     setExpandedMore(v => !v);
   };
 
+  const statusColor = isOnline === null ? '#9aa0a6' : isOnline ? '#22c55e' : '#ef4444';
+  const statusLabel = isOnline === null ? '...' : isOnline ? 'online' : 'offline';
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         // Placeholder for a nicer header or removed entirely if only title is needed
         <View style={styles.headerSpacer} />
-      }>
+      }
+      refreshing={isRefreshing}
+      onRefresh={refresh}
+      showHeader={false}>
+      {/* Lekki odstęp od góry po usunięciu nagłówka */}
+      <View style={styles.topSpacer} />
+
       <ThemedView style={styles.header}>
         <View style={styles.titleRow}>
-           <ThemedText type="title">Wypożyczalnia książek</ThemedText>
-           {/* Modern Refresh Button */}
-           <Pressable
+          <ThemedText type="title">Wypożyczalnia książek</ThemedText>
+          {/* Modern Refresh Button */}
+          <Pressable
               onPress={() => refresh()}
               style={({ pressed }) => [
                 styles.iconBtn,
@@ -199,10 +208,13 @@ export default function HomeScreen() {
            </Pressable>
         </View>
 
-        <ThemedText style={styles.meta}>
-          Status: {isOnline === null ? '...' : isOnline ? 'online' : 'offline'}
-          {savedAt ? ` • ${new Date(savedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ''}
-        </ThemedText>
+        <View style={styles.metaRow}>
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} accessibilityLabel={`Status: ${statusLabel}`} />
+          <ThemedText style={styles.meta}>
+            {statusLabel}
+            {savedAt ? ` • ${new Date(savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+          </ThemedText>
+        </View>
 
         {error ? <ThemedText style={styles.error}>Błąd: {error}</ThemedText> : null}
       </ThemedView>
@@ -243,6 +255,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(150,150,150,0.1)',
+  },
+  topSpacer: {
+    height: 8,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
   },
   meta: {
     opacity: 0.7,
